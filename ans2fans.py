@@ -2,8 +2,9 @@
     ANS2FANS
 """
 
-import os
+
 import argparse
+import types
 
 
 parser = argparse.ArgumentParser(
@@ -30,19 +31,20 @@ blinking = False
 inverted = False
 hidden = False
 
-out = []
+out = ['%R']
 i = 0
+
+
 while i < leng:
     o = (string[i][0])
-    #print o
     if o == chr(0) or o == chr(7) or o == chr(13):
         # print o
         pass
     elif o == '\n':
-        out.append("%R")
-    elif o == '\x1B': # ESC - 0x1B - 21
-        type = "m"
-        code = ""
+        out.append('%R')
+    elif o == '\x1b': # ESC - 0x1B - 21
+        type = 'm'
+        code = ''
         j = i + 1
         stop = False
         while (j+1) < leng and stop == False:
@@ -100,17 +102,28 @@ while i < leng:
                     back = value - 40
         elif type == 'C':
             number = int(parts[0])
-            out.append([fore, back, 32, parts[0]])
+            if back == 0 and int(parts[0]) < 6:
+                out.append('%B' * int(parts[0]))
+            else:
+                out.append('[c(32,' + parts[0] + ')]')
+                #out.append([fore, back, [[32, int(parts[0])]]])
         elif type == 'h':  # ignores code 7h
             pass
         elif type == '?':  # ignores 'screen mode' code ?#
             pass
-    elif o == '\x1A':   # This starts a SAUCE record...
+    elif o == '\x1a':   # This starts a SAUCE record...
         break;  # ...we don't want any of that now do we?
-    elif o == ' ':
-        out.append([fore, back, 32, 1])
     else:
-        out.append([fore, back, ord(o), 1])        
+        last = out[len(out) - 1]
+        if last[0] == fore and last[1] == back:
+            lastchar = last[2][len(last[2]) - 1]
+            if lastchar[0] == ord(o):    # same char was just put in!
+                # add the number of the last character to the new number
+                out[len(out)-1][2][len(last[2])-1][1] += 1
+            else:
+                out[len(out)-1][2].append([ord(o), 1])
+        else:
+            out.append([fore, back, [[ord(o), 1]]]) 
     i += 1
 
 print out
@@ -124,25 +137,30 @@ for i in xrange(total):
     elif not isinstance(out[i], basestring):
         fore = out[i][0]
         back = out[i][1]
-        if i == total-1:
-            if out[i][3] == 1:
-                final += "[color("+str(fore)+","+str(back)+",c("+str(out[i][2])+"))]"
-            else:
-                final += "[color("+str(fore)+","+str(back)+",c("+str(out[i][2])+","+str(out[i][3])+"))]"
-        elif isinstance(out[i+1], basestring): # not array
-            if out[i][3] == 1:
-                final += "[color("+str(fore)+","+str(back)+",c("+str(out[i][2])+"))]"
-            else:
-                final += "[color("+str(fore)+","+str(back)+",c("+str(out[i][2])+","+str(out[i][3])+"))]"
-        elif not isinstance(out[i+1], basestring): # is array
-            if out[i][2] != out[i+1][2] or out[i][1] != out[i+1][1] or out[i][0] != out[i+1][0]:
-                if out[i][3] == 1:
-                    final += "[color("+str(fore)+","+str(back)+",c("+str(out[i][2])+"))]"
-                else:
-                    final += "[color("+str(fore)+","+str(back)+",c("+str(out[i][2])+","+str(out[i][3])+"))]"
-            else:
-                out[i+1][3] += out[i][3]
+        chars = out[i][2]
 
+        final += '[color(' + str(fore) + ',' + str(back) + ','
+        if isinstance(chars, types.IntType):   # a number
+            final += 'c(' + str(chars) + ')'
+        elif isinstance(chars, basestring):
+            final += chars
+        elif len(chars) == 1:       # one c()
+            if chars[0][0] == 32 and chars[0][1] == 1:   # space is smaller as %b
+                final += '%b'
+            elif chars[0][1] == 1:  # c(##)
+                final += 'c(' + str(chars[0][0]) + ')'
+            elif chars[0][1] > 1:   # c(##,##)
+                final += 'c(' + str(chars[0][0]) + ',' + str(chars[0][1]) + ')'
+        else: # more than one c()
+            for char in chars:
+                if char[1] == 1:
+                    if char[0] == 32 and char[1] == 1:  # space is smaller as %b
+                        final += '%b'
+                    else:
+                        final += '[c(' + str(char[0]) + ')]'
+                elif char[1] > 1:
+                    final += '[c(' + str(char[0]) + ',' + str(char[1]) + ')]'
+        final += ')]'
 
 if not args.output:     # print to stdio
     print final
