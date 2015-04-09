@@ -138,6 +138,26 @@ for i in xrange(total):
         fore = out[i][0]
         back = out[i][1]
         chars = out[i][2]
+        """
+        if i == total-1:
+            if out[i][3] == 1:
+                final += "[color("+str(fore)+","+str(back)+",c("+str(out[i][2])+"))]"
+            else:
+                final += "[color("+str(fore)+","+str(back)+",c("+str(out[i][2])+","+str(out[i][3])+"))]"
+        if isinstance(out[i+1], basestring): # not array
+            if out[i][3] == 1:
+                final += "[color("+str(fore)+","+str(back)+",c("+str(out[i][2])+"))]"
+            else:
+                final += "[color("+str(fore)+","+str(back)+",c("+str(out[i][2])+","+str(out[i][3])+"))]"
+        elif not isinstance(out[i+1], basestring): # is array
+            if out[i][2] != out[i+1][2] or out[i][1] != out[i+1][1] or out[i][0] != out[i+1][0]:
+                if out[i][3] == 1:
+                    final += "[color("+str(fore)+","+str(back)+",c("+str(out[i][2])+"))]"
+                else:
+                    final += "[color("+str(fore)+","+str(back)+",c("+str(out[i][2])+","+str(out[i][3])+"))]"
+            else:
+                out[i+1][3] += out[i][3]
+        """
 
         final += '[color(' + str(fore) + ',' + str(back) + ','
         if isinstance(chars, types.IntType):   # a number
