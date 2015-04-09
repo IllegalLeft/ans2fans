@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 """
     ANS2FANS
 """
@@ -37,6 +39,15 @@ i = 0
 
 while i < leng:
     o = (string[i][0])
+
+    # substitutions
+    if o == chr(0):
+        o == chr(32);
+    if o == chr(2):
+        o = chr(1)
+    if o == chr(7):
+        o = chr(249)
+
     if o == chr(0) or o == chr(7) or o == chr(13):
         # print o
         pass
@@ -123,10 +134,10 @@ while i < leng:
             else:
                 out[len(out)-1][2].append([ord(o), 1])
         else:
-            out.append([fore, back, [[ord(o), 1]]]) 
+            out.append([fore, back, [[ord(o), 1]]])
     i += 1
 
-print out
+#print out
 
 
 final = ""
