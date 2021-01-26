@@ -1,7 +1,10 @@
 #!/usr/bin/python
 
 """
-    ANS2FANS
+ANS2FANS
+
+This script takes ansi files and converts them to fansi/MUSHcode format to be
+used on 8bitMUSH.
 """
 
 
@@ -41,11 +44,11 @@ while i < leng:
     o = (string[i][0])
 
     # substitutions
-    if o == chr(0):
+    if o == chr(0): # null char -> space
         o == chr(32);
-    if o == chr(2):
+    if o == chr(2): # filled smiley -> unfilled smiley
         o = chr(1)
-    if o == chr(7):
+    if o == chr(7): # bullet/dot -> smaller bullet
         o = chr(249)
 
     if o == chr(0) or o == chr(7) or o == chr(13):
@@ -82,7 +85,7 @@ while i < leng:
             part = int(part)
         if type == 'm':
             pieces = len(parts)
-            for k in xrange(pieces):
+            for k in range(pieces):
                 value = int(parts[k])
                 if value == 1:
                     highlight=True
@@ -137,47 +140,29 @@ while i < leng:
             out.append([fore, back, [[ord(o), 1]]])
     i += 1
 
-#print out
+# print(out)
 
 
 final = ""
 total = len(out)
-for i in xrange(total):
+for i in range(total):
     if isinstance(out[i], str):
         final += out[i]
-    elif not isinstance(out[i], basestring):
+    elif not isinstance(out[i], str):
         fore = out[i][0]
         back = out[i][1]
         chars = out[i][2]
-        """
-        if i == total-1:
-            if out[i][3] == 1:
-                final += "[color("+str(fore)+","+str(back)+",c("+str(out[i][2])+"))]"
-            else:
-                final += "[color("+str(fore)+","+str(back)+",c("+str(out[i][2])+","+str(out[i][3])+"))]"
-        if isinstance(out[i+1], basestring): # not array
-            if out[i][3] == 1:
-                final += "[color("+str(fore)+","+str(back)+",c("+str(out[i][2])+"))]"
-            else:
-                final += "[color("+str(fore)+","+str(back)+",c("+str(out[i][2])+","+str(out[i][3])+"))]"
-        elif not isinstance(out[i+1], basestring): # is array
-            if out[i][2] != out[i+1][2] or out[i][1] != out[i+1][1] or out[i][0] != out[i+1][0]:
-                if out[i][3] == 1:
-                    final += "[color("+str(fore)+","+str(back)+",c("+str(out[i][2])+"))]"
-                else:
-                    final += "[color("+str(fore)+","+str(back)+",c("+str(out[i][2])+","+str(out[i][3])+"))]"
-            else:
-                out[i+1][3] += out[i][3]
-        """
 
         final += '[color(' + str(fore) + ',' + str(back) + ','
-        if isinstance(chars, types.IntType):   # a number
+        if isinstance(chars, int):   # a number
             final += 'c(' + str(chars) + ')'
-        elif isinstance(chars, basestring):
+        elif isinstance(chars, str):
             final += chars
         elif len(chars) == 1:       # one c()
             if chars[0][0] == 32 and chars[0][1] == 1:   # space is smaller as %b
                 final += '%b'
+            elif chars[0][0] >= 33 and chars[0][0] <= 126: # ascii chars
+                final += chr(chars[0][0])
             elif chars[0][1] == 1:  # c(##)
                 final += 'c(' + str(chars[0][0]) + ')'
             elif chars[0][1] > 1:   # c(##,##)
@@ -185,8 +170,10 @@ for i in xrange(total):
         else: # more than one c()
             for char in chars:
                 if char[1] == 1:
-                    if char[0] == 32 and char[1] == 1:  # space is smaller as %b
+                    if char[0] == 32: # and char[1] == 1:  # space is smaller as %b
                         final += '%b'
+                    elif (char[0] >= 33) and (char[0] <= 126): # ascii chars
+                        final += chr(char[0])
                     else:
                         final += '[c(' + str(char[0]) + ')]'
                 elif char[1] > 1:
@@ -194,7 +181,7 @@ for i in xrange(total):
         final += ')]'
 
 if not args.output:     # print to stdio
-    print final
+    print(final)
 else:                   # print to file
     outputfile = open(args.output, 'w+')
     outputfile.write(final)
